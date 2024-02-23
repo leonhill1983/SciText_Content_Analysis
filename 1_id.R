@@ -9,26 +9,6 @@ library('stringr')
 library('readtext')
 
 
-## importing the main file
-
-path_1 <- "C:\\Users\\Mahmood\\Desktop\\alizad_1995\\military\\sample\\files\\"
-filename <- "تاثیر چند کشتی همزمان بر عملکرد دانه ارقام گلرنگ در منطقه آران و بیدگل.docx"
-
-cntnt <- unlist(readtext(paste0(path_1, filename)))[2]
-
-## removing the TOC (if applicable)
-
-if(length(unlist(str_locate_all(cntnt, "PAGEREF")))!=0) {
-  
-  pt_1 <- unlist(str_locate_all(cntnt, "PAGEREF"))[1] - 2
-  pt_2 <- unlist(str_locate_all(cntnt, "PAGEREF"))[length(unlist(str_locate_all(cntnt, "PAGEREF")))] + 20
-  
-  part_1 <- str_sub(cntnt, 1, pt_1-1)
-  part_2 <- str_sub(cntnt, pt_2+1, nchar(cntnt))
-  
-  cntnt <- str_c(part_1, part_2, sep="\n")
-  
-}
 
 # # # # #
 
@@ -85,7 +65,7 @@ integ <- function(chr_lst = chr_lst) {
 
 
 min_len <- function(chrlst, minchar) {
-
+  
   if(length(chrlst)!=0) {
     for(i in 1:length(chrlst)) {
       if(nchar(chrlst[i]) < minchar) {
@@ -104,7 +84,7 @@ min_len <- function(chrlst, minchar) {
 
 
 max_len <- function(chrlst, maxchar) {
-
+  
   if(length(chrlst)!=0) {
     for(i in 1:length(chrlst)) {
       if(nchar(chrlst[i]) > maxchar) {
@@ -122,34 +102,6 @@ max_len <- function(chrlst, maxchar) {
 # # # # #
 
 
-## integrating the text
-cntnt <- integ(cntnt)
-
-path_2 <- "C:\\Users\\Mahmood\\Desktop\\alizad_1995\\military\\input\\meta.xlsx"
-meta <- read_excel(path_2)
-
-org <- integ(NA_trim(meta$org))
-grp <- integ(NA_trim(meta$grp))
-sbj <- integ(NA_trim(meta$sbj))
-prf <- integ(NA_trim(meta$prf))
-exe <- integ(NA_trim(meta$exe))
-yer <- integ(NA_trim(meta$yer))
-
-key <- integ(NA_trim(meta$key))
-
-
-abs <- integ(NA_trim(meta$abs))
-
-
-list <- list(org, grp, sbj, prf, exe, yer)
-
-id <- vector("list", length(list))
-
-# extracting abs out of columns
-# -2 is because of filling abs and key later, not with the other meta keyowrds
-names(id) <- colnames(meta)[1:(length(meta)-2)]
-
-# # # # # #
 
 
 fnd_wrd <- function(text, word, textlen=5000) {
@@ -187,7 +139,7 @@ fnd_wrd <- function(text, word, textlen=5000) {
 }
 
 
-# # # # # #
+# # # # #
 
 
 
@@ -248,46 +200,114 @@ fnd_abs <- function(text, abs, textlen=17500, charlen=175) {
 
 
 
-# # # # # #
+# # # # #
 
 
-# finding the phrases we're looking for
-
-for (i in 1:length(list)) {
-  id[[i]] <- fnd_wrd(cntnt, unlist(list[i]))
-}
-
-id$key <- fnd_wrd(cntnt, key, 17500)
-
-# purifying exe based on length less than 30
 
 
-# removing NA values
-for(i in 1:length(id)) {
-  id[[i]] <- NA_trim(id[[i]])
-}
+## importing the main file
 
+path_1 <- "C:\\Users\\Mahmood\\Desktop\\alizad_1995\\military\\sample\\files"
+files <- list.files(path_1, "docx")
 
-# exe number of characters is less than 30
-id$exe <- max_len(id$exe, 30)
+cum_id <- vector("list", length(files))
+names(cum_id) <- str_remove(files, ".docx")
 
-id$exe <- NA_trim(id$exe)
-
-
-# sbj number of characters is more than 15
-id$sbj <- min_len(id$sbj, 15)
-
-id$sbj <- NA_trim(id$sbj)
-
-
-# yer should have at least two numbers
-for(i in 1:length(id$yer)) {
-  if(!str_detect(id$yer[i], DIGIT %R% DIGIT)) {
-    id$yer[i] <- NA
+for(t in 1:length(files)) {
+  
+  
+  filename <- files[t]
+  
+  cntnt <- unlist(readtext(paste0(path_1, "\\", filename)))[2]
+  
+  ## removing the TOC (if applicable)
+  
+  if(length(unlist(str_locate_all(cntnt, "PAGEREF")))!=0) {
+    
+    pt_1 <- unlist(str_locate_all(cntnt, "PAGEREF"))[1] - 2
+    pt_2 <- unlist(str_locate_all(cntnt, "PAGEREF"))[length(unlist(str_locate_all(cntnt, "PAGEREF")))] + 20
+    
+    part_1 <- str_sub(cntnt, 1, pt_1-1)
+    part_2 <- str_sub(cntnt, pt_2+1, nchar(cntnt))
+    
+    cntnt <- str_c(part_1, part_2, sep="\n")
+    
   }
+  
+  
+  ## integrating the text
+  cntnt <- integ(cntnt)
+  
+  path_2 <- "C:\\Users\\Mahmood\\Desktop\\alizad_1995\\military\\input\\meta.xlsx"
+  meta <- read_excel(path_2)
+  
+  org <- integ(NA_trim(meta$org))
+  grp <- integ(NA_trim(meta$grp))
+  sbj <- integ(NA_trim(meta$sbj))
+  prf <- integ(NA_trim(meta$prf))
+  exe <- integ(NA_trim(meta$exe))
+  yer <- integ(NA_trim(meta$yer))
+  
+  key <- integ(NA_trim(meta$key))
+  
+  
+  abs <- integ(NA_trim(meta$abs))
+  
+  
+  list <- list(org, grp, sbj, prf, exe, yer)
+  
+  id <- vector("list", length(list))
+  
+  # extracting abs out of columns
+  # -2 is because of filling abs and key later, not with the other meta keyowrds
+  names(id) <- colnames(meta)[1:(length(meta)-2)]
+  
+  
+  
+  # finding the phrases we're looking for
+  
+  for (i in 1:length(list)) {
+    id[[i]] <- fnd_wrd(cntnt, unlist(list[i]))
+  }
+  
+  id$key <- fnd_wrd(cntnt, key, 17500)
+  
+  # purifying exe based on length less than 30
+  
+  
+  # removing NA values
+  for(i in 1:length(id)) {
+    id[[i]] <- NA_trim(id[[i]])
+  }
+  
+  
+  # exe number of characters is less than 30
+  id$exe <- max_len(id$exe, 30)
+  
+  id$exe <- NA_trim(id$exe)
+  
+  
+  # sbj number of characters is more than 15
+  id$sbj <- min_len(id$sbj, 15)
+  
+  id$sbj <- NA_trim(id$sbj)
+  
+  
+  # yer should have at least two numbers
+  for(i in 1:length(id$yer)) {
+    if(!str_detect(id$yer[i], DIGIT %R% DIGIT)) {
+      id$yer[i] <- NA
+    }
+  }
+  
+  id$yer <- NA_trim(id$yer)
+  
+  
+  id$abs <- fnd_abs(cntnt, abs)
+  
+  
+  cum_id[[t]] <- id
+  
+  cat(t, "/", length(files), "\t", names(cum_id)[t], "\n", sep="")
+  
 }
-
-id$yer <- NA_trim(id$yer)
-
-
-id$abs <- fnd_abs(cntnt, abs)
